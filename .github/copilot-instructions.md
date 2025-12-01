@@ -10,6 +10,7 @@ The **Enterprise Automation Handbook** provides comprehensive best practices for
 
 - ✅ **12-team-best-practices-and-training.md** - Complete with team structure, onboarding, mentoring, and continuous learning
 - ✅ **13-monitoring-and-observability-deep-dive.md** - Complete with metrics, logging, tracing, and SLO framework
+- ✅ **14-testing-strategies-and-frameworks.md** - Complete with unit, integration, E2E, performance, and chaos testing
 - ✅ **11-infrastructure-patterns-and-architecture.md** - Complete with microservices, serverless, event-driven, and service mesh patterns
 - ✅ **10-devops-guides-and-principles.md** - Complete with culture, CI/CD, monitoring, incident management, and maturity model
 - ✅ **09-docker-best-practices.md** - Complete with image building, security, orchestration, and optimization
@@ -653,6 +654,70 @@ When creating code examples:
     - Case study walkthroughs
     - Post-incident improvements
 
+## Working with Testing Strategies & Frameworks
+
+### Key Areas to Understand
+
+1. **Testing Pyramid and Strategy**
+   - Testing pyramid (50% unit, 40% integration, 10% E2E)
+   - Test types and coverage targets
+   - Component-specific testing decisions
+   - Cost-benefit analysis
+
+2. **Unit Testing**
+   - Principles of good unit tests (isolated, fast, deterministic)
+   - Mocking and dependency injection
+   - Parametrized testing
+   - Test naming conventions (AAA pattern)
+
+3. **Integration Testing**
+   - Testing multiple components together
+   - Testcontainers for dependencies (PostgreSQL, Redis)
+   - Docker Compose for test environments
+   - Database and service integration
+
+4. **End-to-End Testing**
+   - Critical user workflow testing
+   - Cypress for web application testing
+   - Test data and fixtures
+   - Cross-browser compatibility
+
+5. **Performance Testing**
+   - Load, stress, spike, soak, and endurance testing
+   - k6 scripting and thresholds
+   - Response time metrics and SLAs
+   - Bottleneck identification
+
+6. **Security Testing**
+   - SAST (Static Application Security Testing)
+   - DAST (Dynamic Application Security Testing)
+   - Dependency vulnerability scanning
+   - Secret detection and compliance
+
+7. **Infrastructure Testing**
+   - Infrastructure as Code testing
+   - Terratest for Terraform validation
+   - Ansible playbook testing with Molecule
+   - Configuration validation and verification
+
+8. **Chaos Engineering**
+   - Hypothesis-driven chaos experiments
+   - Chaos Mesh for Kubernetes testing
+   - Resource, network, and storage failures
+   - Resilience and recovery testing
+
+9. **Test Automation and CI/CD**
+   - Multi-stage test execution pipelines
+   - Coverage tracking and thresholds
+   - Test result reporting and artifacts
+   - Build failure on test failures
+
+10. **Testing Best Practices**
+    - Testing strategy checklist
+    - Anti-patterns to avoid
+    - Test maintenance and refactoring
+    - Continuous improvement and metrics
+
 ## Working with Infrastructure Patterns & Architecture
 
 ### Key Areas to Understand
@@ -662,12 +727,12 @@ When creating code examples:
 ## Project Metadata
 
 - **Target Audience**: DevOps Engineers, Platform Engineers, Infrastructure Teams
-- **Scope**: Best practices for Ansible, Terraform, Kubernetes, CI/CD, GitOps, Git, Code Quality, DevSecOps, Docker, DevOps Principles, Architecture Patterns, Team Development, and Monitoring & Observability
-- **Focus**: Enterprise-grade automation, reliability, maintainability, team development, operational visibility, and professional practices
+- **Scope**: Best practices for Ansible, Terraform, Kubernetes, CI/CD, GitOps, Git, Code Quality, DevSecOps, Docker, DevOps Principles, Architecture Patterns, Team Development, Monitoring & Observability, and Testing Strategies
+- **Focus**: Enterprise-grade automation, reliability, maintainability, team development, operational visibility, comprehensive testing, and professional practices
 - **Author**: Michael Vogeler
-- **Maintained By**: DevOps & Observability Team
+- **Maintained By**: DevOps, QA & Observability Team
 - **Last Updated**: December 2025
-- **Total Guides**: 13 comprehensive best practices guides (15000+ lines)
+- **Total Guides**: 14 comprehensive best practices guides (17000+ lines)
 - **Examples**: 19 production-ready examples across 5 technologies
 
 ---
