@@ -1,0 +1,322 @@
+---
+# ArgoCD Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+
+---
+# ArgoCD Application - Staging
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp-staging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/myorg/myapp-config
+    targetRevision: staging
+    path: k8s/staging
+    plugin:
+      name: kustomize
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: myapp-staging
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+  revisionHistoryLimit: 10
+
+---
+# ArgoCD Application - Production
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp-production
+  namespace: argocd
+spec:
+  project: production
+  source:
+    repoURL: https://github.com/myorg/myapp-config
+    targetRevision: main
+    path: k8s/production
+    plugin:
+      name: kustomize
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: myapp-production
+  syncPolicy:
+    # Manual sync for production
+    syncOptions:
+    - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+
+---
+# ArgoCD Project - Production
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: production
+  namespace: argocd
+spec:
+  description: Production environment
+  sourceRepos:
+  - 'https://github.com/myorg/*'
+  destinations:
+  - namespace: 'myapp-production'
+    server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+
+---
+# ArgoCD Application Set for Multi-Environment
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: myapp-environments
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+  - list:
+      elements:
+      - name: dev
+        namespace: myapp-dev
+        branch: develop
+        syncPolicy: automated
+      - name: staging
+        namespace: myapp-staging
+        branch: staging
+        syncPolicy: manual
+      - name: production
+        namespace: myapp-production
+        branch: main
+        syncPolicy: manual
+  template:
+    metadata:
+      name: myapp-{{ .name }}
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/myorg/myapp-config
+        targetRevision: {{ .branch }}
+        path: k8s/{{ .name }}
+        helm:
+          releaseName: myapp
+          values: |
+            environment: {{ .name }}
+            replicaCount: 
+              dev: 1
+              staging: 2
+              production: 3
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: {{ .namespace }}
+      syncPolicy: "{{ .syncPolicy }}"
+
+---
+# ArgoCD Notification Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  service.slack: |
+    token: $slack-token
+  template.app-deployed: |
+    message: |
+      Application {{.app.metadata.name}} deployment status is {{.app.status.operationState.phase}}.
+      {{if eq .app.status.operationState.phase "Succeeded"}}:white_check_mark:{{else}}:exclamation:{{end}}
+      <{{.context.argocdUrl}}/applications/{{.app.metadata.name}}|View in Argo CD>
+    slack:
+      attachments: |
+        [{
+          "color": "#18be52",
+          "fields": [
+            {
+              "title": "Sync Result",
+              "value": "{{.app.status.syncResult.resources | length}} resources updated",
+              "short": true
+            },
+            {
+              "title": "Repository",
+              "value": "{{.app.spec.source.repoURL}}",
+              "short": true
+            }
+          ]
+        }]
+
+---
+# ArgoCD RBAC Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+data:
+  policy.default: role:readonly
+  policy.csv: |
+    # DevOps team can manage all applications
+    p, role:devops, applications, *, */*, allow
+    p, role:devops, repositories, *, *, allow
+    
+    # Dev team can view staging
+    p, role:dev, applications, get, myapp-staging/*, allow
+    p, role:dev, applications, sync, myapp-staging/*, allow
+    
+    # Read-only role
+    p, role:readonly, applications, get, */*, allow
+    
+    # Group mappings
+    g, devops-group, role:devops
+    g, dev-group, role:dev
+
+---
+# Flux Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux-system
+
+---
+# Flux GitRepository
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: GitRepository
+metadata:
+  name: myapp-config
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/myorg/myapp-config
+  ref:
+    branch: main
+  secretRef:
+    name: flux-github-token
+  ignore: |
+    # Exclude files
+    /**/.*
+    /**/README.md
+    /test
+
+---
+# Flux Kustomization for Production
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: myapp-production
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: ./k8s/production
+  prune: true
+  wait: true
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: myapp-config
+  postBuild:
+    substitute:
+      environment: production
+      replicas: "3"
+  healthChecks:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: myapp
+    namespace: myapp-production
+  images:
+  - name: myapp
+    newName: myregistry.azurecr.io/myapp
+    newTag: main-latest
+  patches:
+  - target:
+      kind: Deployment
+      name: myapp
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+
+---
+# Flux HelmRepository
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: prometheus-community
+  namespace: flux-system
+spec:
+  interval: 10m
+  url: https://prometheus-community.github.io/helm-charts
+
+---
+# Flux HelmRelease
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+  values:
+    prometheus:
+      prometheusSpec:
+        retention: 30d
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+  postRenderers:
+  - kustomize:
+      patchesStrategicMerge:
+      - apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: prometheus-config
+        data:
+          prometheus.yml: |
+            global:
+              scrape_interval: 30s
+
+---
+# Flux Notification Provider (Slack)
+apiVersion: notification.toolkit.fluxcd.io/v1beta2
+kind: Provider
+metadata:
+  name: slack
+  namespace: flux-system
+spec:
+  type: slack
+  address: https://hooks.slack.com/services/XXXX/YYYY/ZZZZ
+
+---
+# Flux Alert
+apiVersion: notification.toolkit.fluxcd.io/v1beta2
+kind: Alert
+metadata:
+  name: myapp-sync
+  namespace: flux-system
+spec:
+  providerRef:
+    name: slack
+  eventSeverity: info
+  eventSources:
+  - kind: Kustomization
+    name: myapp-production
+  suspend: false

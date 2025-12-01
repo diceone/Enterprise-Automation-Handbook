@@ -1,0 +1,156 @@
+---
+# Webserver playbook - Configure Nginx and application
+- name: Configure web servers
+  hosts: webservers
+  become: true
+  gather_facts: true
+
+  vars:
+    nginx_user: www-data
+    nginx_worker_processes: auto
+    app_user: deploy
+    app_group: deploy
+    app_home: /opt/app
+
+  roles:
+    - common
+
+  pre_tasks:
+    - name: Validate webserver variables
+      assert:
+        that:
+          - service_port is defined
+          - environment is defined
+        fail_msg: "Required webserver variables missing"
+
+  tasks:
+    - name: Install Nginx
+      package:
+        name: nginx
+        state: present
+      register: nginx_install
+      notify: restart nginx
+
+    - name: Create Nginx configuration
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+        backup: yes
+      notify: reload nginx
+      validate: 'nginx -t -c %s'
+
+    - name: Create application virtual host
+      template:
+        src: vhost.conf.j2
+        dest: /etc/nginx/sites-available/app
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload nginx
+
+    - name: Enable virtual host
+      file:
+        src: /etc/nginx/sites-available/app
+        dest: /etc/nginx/sites-enabled/app
+        state: link
+        owner: root
+        group: root
+
+    - name: Install application dependencies
+      block:
+        - name: Install system dependencies
+          package:
+            name:
+              - python3-pip
+              - python3-venv
+              - libpq-dev
+            state: present
+
+        - name: Create virtual environment
+          file:
+            path: "{{ app_home }}/venv"
+            state: directory
+            owner: "{{ app_user }}"
+            group: "{{ app_group }}"
+
+        - name: Install Python requirements
+          pip:
+            requirements: "{{ app_home }}/requirements.txt"
+            virtualenv: "{{ app_home }}/venv"
+            virtualenv_command: python3 -m venv
+          become_user: "{{ app_user }}"
+          when: ansible_os_family == "Debian"
+
+    - name: Configure application systemd service
+      template:
+        src: app.service.j2
+        dest: /etc/systemd/system/app.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - daemon reload
+        - restart app
+
+    - name: Enable and start services
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop:
+        - nginx
+        - app
+
+    - name: Configure health check
+      template:
+        src: health-check.sh.j2
+        dest: /usr/local/bin/health-check
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Add health check to crontab
+      cron:
+        name: "Health check for {{ inventory_hostname }}"
+        minute: "*/5"
+        job: "/usr/local/bin/health-check"
+        user: root
+        state: present
+
+  handlers:
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+    - name: restart app
+      systemd:
+        name: app
+        state: restarted
+        daemon_reload: yes
+
+    - name: daemon reload
+      systemd:
+        daemon_reload: yes
+
+  post_tasks:
+    - name: Verify Nginx is responding
+      uri:
+        url: "http://localhost/health"
+        method: GET
+        status_code: 200
+      retries: 5
+      delay: 2
+      register: nginx_health
+
+    - name: Nginx health check result
+      debug:
+        msg: "Nginx is healthy: {{ nginx_health.status == 200 }}"

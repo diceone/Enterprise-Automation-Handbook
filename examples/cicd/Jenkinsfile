@@ -1,0 +1,283 @@
+pipeline {
+    agent any
+    
+    parameters {
+        string(name: 'DOCKER_IMAGE', defaultValue: 'myapp:latest', description: 'Docker image to deploy')
+        choice(name: 'ENVIRONMENT', choices: ['staging', 'production'], description: 'Target environment')
+        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run test suite')
+    }
+    
+    options {
+        // Keep last 30 builds
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        // Timeout if build takes longer than 1 hour
+        timeout(time: 1, unit: 'HOURS')
+        // Disable concurrent builds
+        disableConcurrentBuilds()
+    }
+    
+    environment {
+        REGISTRY = 'registry.hub.docker.com'
+        IMAGE_NAME = "${REGISTRY}/myapp"
+        GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+        DOCKER_TAG = "${BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    echo "Building from branch: ${BRANCH_NAME}"
+                    echo "Git commit: ${GIT_COMMIT}"
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                script {
+                    echo "Building Docker image: ${IMAGE_NAME}:${DOCKER_TAG}"
+                    sh '''
+                        docker build \
+                            --tag ${IMAGE_NAME}:${DOCKER_TAG} \
+                            --tag ${IMAGE_NAME}:latest \
+                            --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+                            --build-arg VCS_REF=${GIT_COMMIT} \
+                            --build-arg BUILD_NUMBER=${BUILD_NUMBER} \
+                            .
+                    '''
+                }
+            }
+        }
+        
+        stage('Test') {
+            when {
+                expression { params.RUN_TESTS == true }
+            }
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        script {
+                            echo "Running unit tests..."
+                            sh '''
+                                docker run --rm ${IMAGE_NAME}:${DOCKER_TAG} \
+                                    pytest tests/unit --cov=app --cov-report=xml
+                            '''
+                        }
+                    }
+                }
+                
+                stage('Integration Tests') {
+                    steps {
+                        script {
+                            echo "Running integration tests..."
+                            sh '''
+                                docker-compose -f docker-compose.test.yml up -d
+                                sleep 10
+                                docker-compose -f docker-compose.test.yml exec -T app \
+                                    pytest tests/integration -v
+                                docker-compose -f docker-compose.test.yml down
+                            '''
+                        }
+                    }
+                }
+                
+                stage('Code Quality') {
+                    steps {
+                        script {
+                            echo "Running code quality checks..."
+                            sh '''
+                                docker run --rm ${IMAGE_NAME}:${DOCKER_TAG} \
+                                    pylint app --exit-zero --output-format=parseable > pylint.txt
+                            '''
+                            publishHTML([
+                                reportDir: '.',
+                                reportFiles: 'pylint.txt',
+                                reportName: 'Code Quality Report'
+                            ])
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Security Scan') {
+            steps {
+                script {
+                    echo "Running security scans..."
+                    sh '''
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy image ${IMAGE_NAME}:${DOCKER_TAG}
+                    '''
+                }
+            }
+        }
+        
+        stage('Push to Registry') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    echo "Pushing image to registry..."
+                    withCredentials([usernamePassword(credentialsId: 'docker-registry', 
+                                                       usernameVariable: 'DOCKER_USER', 
+                                                       passwordVariable: 'DOCKER_PASS')]) {
+                        sh '''
+                            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                            docker push ${IMAGE_NAME}:${DOCKER_TAG}
+                            docker push ${IMAGE_NAME}:latest
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    echo "Deploying to staging environment..."
+                    sh '''
+                        kubectl set image deployment/myapp \
+                            myapp=${IMAGE_NAME}:${DOCKER_TAG} \
+                            -n myapp \
+                            --kubeconfig=$KUBECONFIG_STAGING
+                        kubectl rollout status deployment/myapp \
+                            -n myapp \
+                            --kubeconfig=$KUBECONFIG_STAGING
+                    '''
+                }
+            }
+        }
+        
+        stage('Smoke Tests - Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    echo "Running smoke tests on staging..."
+                    sh '''
+                        for i in {1..5}; do
+                            curl -f https://staging.example.com/health && break
+                            sleep 10
+                        done
+                    '''
+                }
+            }
+        }
+        
+        stage('Manual Approval') {
+            when {
+                tag pattern: "^v\\d+\\.\\d+\\.\\d+$", comparator: "REGEXP"
+            }
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    input message: 'Approve deployment to production?', ok: 'Deploy'
+                }
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                tag pattern: "^v\\d+\\.\\d+\\.\\d+$", comparator: "REGEXP"
+            }
+            steps {
+                script {
+                    echo "Deploying to production..."
+                    sh '''
+                        # Blue-green deployment
+                        CURRENT=$(kubectl get deployment myapp-blue \
+                            -n myapp \
+                            -o jsonpath='{.spec.template.spec.containers[0].image}' \
+                            --kubeconfig=$KUBECONFIG_PROD 2>/dev/null)
+                        
+                        if [ "$CURRENT" == "${IMAGE_NAME}:${DOCKER_TAG}" ]; then
+                            TARGET="myapp-green"
+                        else
+                            TARGET="myapp-blue"
+                        fi
+                        
+                        kubectl set image deployment/$TARGET \
+                            myapp=${IMAGE_NAME}:${DOCKER_TAG} \
+                            -n myapp \
+                            --kubeconfig=$KUBECONFIG_PROD
+                        
+                        kubectl rollout status deployment/$TARGET \
+                            -n myapp \
+                            --kubeconfig=$KUBECONFIG_PROD
+                        
+                        # Switch traffic
+                        kubectl patch service myapp \
+                            -p "{\"spec\":{\"selector\":{\"deployment\":\"$TARGET\"}}}" \
+                            -n myapp \
+                            --kubeconfig=$KUBECONFIG_PROD
+                    '''
+                }
+            }
+        }
+        
+        stage('Smoke Tests - Production') {
+            when {
+                tag pattern: "^v\\d+\\.\\d+\\.\\d+$", comparator: "REGEXP"
+            }
+            steps {
+                script {
+                    echo "Running smoke tests on production..."
+                    sh '''
+                        for i in {1..10}; do
+                            curl -f https://app.example.com/health && break
+                            sleep 5
+                        done
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                echo "Cleaning up..."
+                sh 'docker-compose -f docker-compose.test.yml down || true'
+            }
+            
+            // Archive test results
+            junit allowEmptyResults: true, testResults: '**/test-results.xml'
+            
+            // Archive coverage reports
+            publishHTML([
+                reportDir: 'htmlcov',
+                reportFiles: 'index.html',
+                reportName: 'Coverage Report',
+                allowMissing: true
+            ])
+        }
+        
+        success {
+            echo "Pipeline completed successfully"
+        }
+        
+        failure {
+            echo "Pipeline failed"
+            // Send notification
+            mail to: 'devops@example.com',
+                 subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "Build failed: ${env.BUILD_URL}"
+        }
+        
+        unstable {
+            echo "Pipeline unstable"
+        }
+        
+        cleanup {
+            // Clean workspace
+            cleanWs()
+        }
+    }
+}

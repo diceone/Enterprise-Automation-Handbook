@@ -1,0 +1,105 @@
+---
+# Complete Ansible inventory example
+all:
+  vars:
+    ansible_user: deploy
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+    ansible_python_interpreter: /usr/bin/python3
+
+  children:
+    # Development environment
+    development:
+      hosts:
+        dev-app-01:
+          ansible_host: 10.0.1.10
+          service_port: 8080
+        dev-db-01:
+          ansible_host: 10.0.1.20
+          db_port: 5432
+      vars:
+        environment: development
+        log_level: debug
+        replicas: 1
+
+    # Staging environment
+    staging:
+      hosts:
+        staging-app-01:
+          ansible_host: 10.0.2.10
+          service_port: 8080
+        staging-app-02:
+          ansible_host: 10.0.2.11
+          service_port: 8080
+        staging-db-01:
+          ansible_host: 10.0.2.20
+          db_port: 5432
+      vars:
+        environment: staging
+        log_level: info
+        replicas: 2
+
+    # Production environment
+    production:
+      hosts:
+        prod-app-01:
+          ansible_host: 10.0.3.10
+          service_port: 8080
+        prod-app-02:
+          ansible_host: 10.0.3.11
+          service_port: 8080
+        prod-app-03:
+          ansible_host: 10.0.3.12
+          service_port: 8080
+        prod-db-01:
+          ansible_host: 10.0.3.20
+          db_port: 5432
+        prod-db-02:
+          ansible_host: 10.0.3.21
+          db_port: 5432
+      vars:
+        environment: production
+        log_level: warn
+        replicas: 3
+        monitoring_enabled: true
+
+    # Group by service type
+    webservers:
+      children:
+        dev_webservers:
+          hosts:
+            dev-app-01:
+          vars:
+            service_type: web
+        staging_webservers:
+          hosts:
+            staging-app-01:
+            staging-app-02:
+          vars:
+            service_type: web
+        prod_webservers:
+          hosts:
+            prod-app-01:
+            prod-app-02:
+            prod-app-03:
+          vars:
+            service_type: web
+
+    databases:
+      children:
+        dev_databases:
+          hosts:
+            dev-db-01:
+          vars:
+            db_type: postgres
+        staging_databases:
+          hosts:
+            staging-db-01:
+          vars:
+            db_type: postgres
+        prod_databases:
+          hosts:
+            prod-db-01:
+            prod-db-02:
+          vars:
+            db_type: postgres
+            backup_enabled: true

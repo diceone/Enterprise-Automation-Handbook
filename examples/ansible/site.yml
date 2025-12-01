@@ -1,0 +1,17 @@
+---
+# Master playbook for complete infrastructure setup
+- name: Configure common settings on all hosts
+  import_playbook: playbooks/common.yml
+
+- name: Configure webservers
+  import_playbook: playbooks/webservers.yml
+  when: inventory_hostname in groups['webservers']
+
+- name: Configure databases
+  import_playbook: playbooks/databases.yml
+  when: inventory_hostname in groups['databases']
+
+- name: Deploy monitoring
+  import_playbook: playbooks/monitoring.yml
+  run_once: true
+  delegate_to: "{{ groups['production'][0] }}"

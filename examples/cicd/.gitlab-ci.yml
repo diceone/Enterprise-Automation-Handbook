@@ -1,0 +1,200 @@
+stages:
+  - build
+  - test
+  - push
+  - deploy
+
+variables:
+  REGISTRY: registry.gitlab.com
+  IMAGE_NAME: ${REGISTRY}/${CI_PROJECT_PATH}
+  IMAGE_TAG: ${CI_COMMIT_SHORT_SHA}
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+before_script:
+  - echo "Starting job for ${CI_COMMIT_BRANCH} branch"
+
+# Build Docker image
+build_image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+  artifacts:
+    reports:
+      dotenv: build.env
+  only:
+    - branches
+
+# Unit tests
+unit_tests:
+  stage: test
+  image: python:3.9
+  script:
+    - pip install -r requirements-test.txt
+    - pytest tests/unit --cov=app --cov-report=term --cov-report=html
+    - coverage report --fail-under=80
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    when: always
+    reports:
+      junit: test-results.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - htmlcov/
+  allow_failure: false
+
+# Integration tests
+integration_tests:
+  stage: test
+  image: docker:latest
+  services:
+    - docker:dind
+    - postgres:15
+  variables:
+    POSTGRES_PASSWORD: "test"
+    POSTGRES_DB: "test_db"
+  script:
+    - docker run -d --name app --network host ${IMAGE_NAME}:${IMAGE_TAG}
+    - sleep 10
+    - docker exec app python -m pytest tests/integration -v
+  after_script:
+    - docker logs app || true
+    - docker stop app || true
+  only:
+    - merge_requests
+    - main
+
+# Code quality
+code_quality:
+  stage: test
+  image: python:3.9
+  script:
+    - pip install pylint flake8 black
+    - pylint app --exit-zero --output-format=parseable > pylint.txt
+    - flake8 app --format=json > flake8.json
+    - black --check app || true
+  artifacts:
+    reports:
+      junit: test-results.xml
+  allow_failure: true
+
+# Security scanning
+security_scan:
+  stage: test
+  image: python:3.9
+  script:
+    - pip install bandit safety
+    - bandit -r app -f json -o bandit.json || true
+    - safety check --json > safety.json || true
+  artifacts:
+    paths:
+      - bandit.json
+      - safety.json
+    reports:
+      sast: bandit.json
+  allow_failure: true
+
+# Push to registry
+push_image:
+  stage: push
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+    - docker push ${IMAGE_NAME}:${IMAGE_TAG}
+    - docker push ${IMAGE_NAME}:latest
+  only:
+    - main
+    - tags
+
+# Deploy to staging
+deploy_staging:
+  stage: deploy
+  image: alpine:latest
+  environment:
+    name: staging
+    url: https://staging.example.com
+    deployment_tier: staging
+  before_script:
+    - apk add --no-cache curl kubectl
+    - mkdir -p $HOME/.kube
+    - echo "$KUBE_CONFIG_STAGING" | base64 -d > $HOME/.kube/config
+  script:
+    - kubectl set image deployment/myapp myapp=${IMAGE_NAME}:${IMAGE_TAG} -n myapp
+    - kubectl rollout status deployment/myapp -n myapp
+  only:
+    - main
+  when: manual
+
+# Deploy to production
+deploy_production:
+  stage: deploy
+  image: alpine:latest
+  environment:
+    name: production
+    url: https://app.example.com
+    deployment_tier: production
+  before_script:
+    - apk add --no-cache curl kubectl
+    - mkdir -p $HOME/.kube
+    - echo "$KUBE_CONFIG_PRODUCTION" | base64 -d > $HOME/.kube/config
+  script:
+    # Blue-green deployment strategy
+    - |
+      CURRENT=$(kubectl get deployment myapp-blue -n myapp -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)
+      if [ "$CURRENT" == "${IMAGE_NAME}:${IMAGE_TAG}" ]; then
+        TARGET_DEPLOYMENT="myapp-green"
+      else
+        TARGET_DEPLOYMENT="myapp-blue"
+      fi
+    - kubectl set image deployment/$TARGET_DEPLOYMENT myapp=${IMAGE_NAME}:${IMAGE_TAG} -n myapp
+    - kubectl rollout status deployment/$TARGET_DEPLOYMENT -n myapp
+    - kubectl patch service myapp -p "{\"spec\":{\"selector\":{\"deployment\":\"$TARGET_DEPLOYMENT\"}}}" -n myapp
+  only:
+    - tags
+  when: manual
+
+# Smoke tests after deploy
+smoke_tests:
+  stage: deploy
+  image: curlimages/curl:latest
+  environment:
+    name: production
+  script:
+    - |
+      for i in {1..5}; do
+        curl -f https://app.example.com/health || exit 1
+        sleep 5
+      done
+  only:
+    - tags
+  needs: ["deploy_production"]
+
+# Rollback production
+rollback_production:
+  stage: deploy
+  image: alpine:latest
+  environment:
+    name: production
+    action: rollback
+  before_script:
+    - apk add --no-cache curl kubectl
+    - mkdir -p $HOME/.kube
+    - echo "$KUBE_CONFIG_PRODUCTION" | base64 -d > $HOME/.kube/config
+  script:
+    - kubectl rollout undo deployment/myapp-blue -n myapp
+    - kubectl rollout undo deployment/myapp-green -n myapp
+    - kubectl rollout status deployment/myapp-blue -n myapp
+  only:
+    - main
+  when: manual

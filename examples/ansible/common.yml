@@ -1,0 +1,152 @@
+---
+# Common playbook - Applies to all hosts
+- name: Common system configuration
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    required_packages:
+      - curl
+      - wget
+      - git
+      - htop
+      - vim
+      - net-tools
+    
+    common_users:
+      - name: deploy
+        uid: 1001
+        groups: sudo,docker
+      - name: monitoring
+        uid: 1002
+        groups: docker
+
+  pre_tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+      
+    - name: Validate required variables
+      assert:
+        that:
+          - environment is defined
+          - log_level is defined
+        fail_msg: "Required variables not defined"
+
+  tasks:
+    - name: Install common packages
+      package:
+        name: "{{ required_packages }}"
+        state: present
+      register: pkg_install
+      until: pkg_install is succeeded
+      retries: 3
+      delay: 10
+
+    - name: Configure system timezone
+      timezone:
+        name: UTC
+
+    - name: Configure sysctl parameters
+      sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      loop:
+        - key: net.ipv4.tcp_tw_reuse
+          value: 1
+        - key: net.ipv4.ip_local_port_range
+          value: 1024 65023
+
+    - name: Create common users
+      user:
+        name: "{{ item.name }}"
+        uid: "{{ item.uid }}"
+        groups: "{{ item.groups }}"
+        shell: /bin/bash
+        state: present
+        createhome: yes
+      loop: "{{ common_users }}"
+
+    - name: Configure SSH hardening
+      block:
+        - name: Disable SSH password authentication
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?PasswordAuthentication'
+            line: 'PasswordAuthentication no'
+          notify: restart sshd
+
+        - name: Disable root login
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?PermitRootLogin'
+            line: 'PermitRootLogin no'
+          notify: restart sshd
+
+    - name: Configure firewall
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+        state: enabled
+      loop:
+        - "22"
+        - "80"
+        - "443"
+      when: ansible_os_family == "Debian"
+
+    - name: Setup log rotation
+      template:
+        src: logrotate.conf.j2
+        dest: /etc/logrotate.d/app
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Create application directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: deploy
+        group: deploy
+        mode: '0755'
+      loop:
+        - /opt/app
+        - /var/lib/app
+        - /var/log/app
+
+    - name: Copy custom monitoring agent
+      copy:
+        src: monitoring-agent.sh
+        dest: /usr/local/bin/monitoring-agent
+        owner: root
+        group: root
+        mode: '0755'
+      notify: restart monitoring
+
+  handlers:
+    - name: restart sshd
+      service:
+        name: ssh
+        state: restarted
+
+    - name: restart monitoring
+      service:
+        name: monitoring
+        state: restarted
+
+  post_tasks:
+    - name: Verify system is healthy
+      command: systemctl is-system-running
+      changed_when: false
+      failed_when: false
+      register: system_status
+
+    - name: Display system status
+      debug:
+        msg: "System status: {{ system_status.stdout }}"
