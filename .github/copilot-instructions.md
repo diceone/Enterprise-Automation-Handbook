@@ -13,6 +13,7 @@ The **Enterprise Automation Handbook** provides comprehensive best practices for
 - ✅ **14-testing-strategies-and-frameworks.md** - Complete with unit, integration, E2E, performance, and chaos testing
 - ✅ **15-logging-best-practices.md** - Complete with structured logging, aggregation, and log analysis
 - ✅ **16-database-best-practices-and-automation.md** - Complete with database provisioning, backup, replication, and automation
+- ✅ **17-disaster-recovery-and-business-continuity.md** - Complete with RTO/RPO planning, backup strategies, and failover automation
 - ✅ **11-infrastructure-patterns-and-architecture.md** - Complete with microservices, serverless, event-driven, and service mesh patterns
 - ✅ **10-devops-guides-and-principles.md** - Complete with culture, CI/CD, monitoring, incident management, and maturity model
 - ✅ **09-docker-best-practices.md** - Complete with image building, security, orchestration, and optimization
@@ -894,15 +895,98 @@ When creating code examples:
     - Backup failure diagnosis
     - Common database issues and solutions
 
+## Working with Disaster Recovery & Business Continuity
+
+### Key Areas to Understand
+
+1. **RTO/RPO Planning**
+   - RTO (Recovery Time Objective) - Maximum acceptable downtime
+   - RPO (Recovery Point Objective) - Maximum acceptable data loss
+   - Disaster classification levels (Level 1-4)
+   - Service criticality matrix
+   - Recovery time vs cost trade-offs
+
+2. **Backup Strategy Hierarchy**
+   - Real-time replication (RPO: 0 minutes)
+   - Near real-time snapshots (RPO: 5-15 minutes)
+   - Hourly backups (RPO: 1 hour)
+   - Daily backups (RPO: 24 hours)
+   - Weekly archives (RPO: 1 week)
+   - Long-term compliance archives
+
+3. **Automated Backup Management**
+   - Full backup scheduling
+   - Incremental backup strategy
+   - WAL (Write-Ahead Logging) archiving
+   - Backup verification and testing
+   - Multi-region backup replication
+   - Retention policies (hot/warm/cold storage)
+
+4. **High Availability Architecture**
+   - Active-Active configurations
+   - Multi-region deployments
+   - Automatic failover mechanisms
+   - Health checks and monitoring
+   - Load balancer failover
+   - Database replication lag monitoring
+
+5. **Failover Automation**
+   - Automated failover triggers
+   - Health check automation
+   - DNS/Route53 update automation
+   - Application restart procedures
+   - Verification steps post-failover
+   - Rollback capabilities
+
+6. **Recovery Procedures**
+   - Database recovery from backup
+   - Point-in-time recovery (PITR)
+   - Application recovery checklist
+   - Data validation procedures
+   - Integrity checking
+   - Performance optimization post-recovery
+
+7. **DR Testing & Validation**
+   - Regular DR drills (quarterly minimum)
+   - Backup restoration testing
+   - Failover simulation
+   - Smoke testing
+   - Recovery time measurement
+   - Documentation updates
+
+8. **Incident Response Planning**
+   - RTO/RPO SLA tracking
+   - Health check dashboards
+   - Alert thresholds
+   - Escalation procedures
+   - Communication plans
+   - Post-incident review process
+
+9. **Documentation & Procedures**
+   - DR plan documentation
+   - Recovery runbooks
+   - Contact lists
+   - Step-by-step procedures
+   - Quick reference guides
+   - Change log maintenance
+
+10. **Compliance & Archiving**
+    - Audit log retention
+    - Backup verification records
+    - Incident documentation
+    - Recovery test reports
+    - Long-term archive management
+    - Regulatory compliance tracking
+
 ## Project Metadata
 
 - **Target Audience**: DevOps Engineers, Platform Engineers, Infrastructure Teams
-- **Scope**: Best practices for Ansible, Terraform, Kubernetes, CI/CD, GitOps, Git, Code Quality, DevSecOps, Docker, DevOps Principles, Architecture Patterns, Team Development, Monitoring & Observability, Testing Strategies, Logging, and Database Automation
+- **Scope**: Best practices for Ansible, Terraform, Kubernetes, CI/CD, GitOps, Git, Code Quality, DevSecOps, Docker, DevOps Principles, Architecture Patterns, Team Development, Monitoring & Observability, Testing Strategies, Logging, Database Automation, and Disaster Recovery
 - **Focus**: Enterprise-grade automation, reliability, maintainability, team development, operational visibility, comprehensive testing, logging strategies, and professional practices
 - **Author**: Michael Vogeler
 - **Maintained By**: DevOps, QA & Observability Team
 - **Last Updated**: December 2025
-- **Total Guides**: 16 comprehensive best practices guides (20000+ lines)
+- **Total Guides**: 17 comprehensive best practices guides (23000+ lines)
 - **Examples**: 19 production-ready examples across 5 technologies
 
 ---

@@ -31,12 +31,13 @@ A comprehensive guide covering **Ansible**, **Terraform**, **Kubernetes**, **CI/
 8. [Testing Strategies & Frameworks](./14-testing-strategies-and-frameworks.md) - Unit, integration, E2E, performance, and chaos testing
 9. [Logging Best Practices](./15-logging-best-practices.md) - Structured logging, aggregation, and log analysis
 10. [Database Best Practices & Automation](./16-database-best-practices-and-automation.md) - Database provisioning, backup, replication, and automation
-11. [Git Best Practices](./06-git-best-practices.md) - Version control and collaboration
-12. [Ansible Best Practices](./01-ansible-best-practices.md) - Configuration management and orchestration
-13. [Terraform Best Practices](./02-terraform-best-practices.md) - Infrastructure as Code patterns
-14. [Kubernetes Best Practices](./03-kubernetes-best-practices.md) - Container orchestration
-15. [CI/CD Pipeline Best Practices](./04-cicd-best-practices.md) - Deployment automation
-16. [GitOps Best Practices](./05-gitops-best-practices.md) - Declarative infrastructure management
+11. [Disaster Recovery & Business Continuity](./17-disaster-recovery-and-business-continuity.md) - RTO/RPO planning, backup strategies, and failover automation
+12. [Git Best Practices](./06-git-best-practices.md) - Version control and collaboration
+13. [Ansible Best Practices](./01-ansible-best-practices.md) - Configuration management and orchestration
+14. [Terraform Best Practices](./02-terraform-best-practices.md) - Infrastructure as Code patterns
+15. [Kubernetes Best Practices](./03-kubernetes-best-practices.md) - Container orchestration
+16. [CI/CD Pipeline Best Practices](./04-cicd-best-practices.md) - Deployment automation
+17. [GitOps Best Practices](./05-gitops-best-practices.md) - Declarative infrastructure management
 
 ## Practical Examples
 
