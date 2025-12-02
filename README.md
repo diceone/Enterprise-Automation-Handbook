@@ -21,6 +21,7 @@ A comprehensive guide covering **Ansible**, **Terraform**, **Kubernetes**, **CI/
 
 ## Best Practices Guides
 
+0. [Core Automation Principles](./00-core-automation-principles.md) - Idempotency, IaC, modularity, version control, and fundamental concepts
 1. [Code Quality & Development Principles](./07-code-quality-principles.md) - SOLID, DRY, KISS, YAGNI principles
 2. [DevSecOps Guidelines and Principles](./08-devsecops-guidelines.md) - Security integration throughout DevOps
 3. [Docker Best Practices](./09-docker-best-practices.md) - Container image building and management
@@ -35,11 +36,11 @@ A comprehensive guide covering **Ansible**, **Terraform**, **Kubernetes**, **CI/
 12. [Cost Management & Optimization](./18-cost-management-and-optimization.md) - Resource tagging, automated cleanup, RI optimization, and cost governance
 13. [Local DevOps Development Environment](./19-local-devops-development-environment.md) - Setup, tools, optimization, and troubleshooting for local development
 14. [Git Best Practices](./06-git-best-practices.md) - Version control and collaboration
-13. [Ansible Best Practices](./01-ansible-best-practices.md) - Configuration management and orchestration
-14. [Terraform Best Practices](./02-terraform-best-practices.md) - Infrastructure as Code patterns
-15. [Kubernetes Best Practices](./03-kubernetes-best-practices.md) - Container orchestration
-16. [CI/CD Pipeline Best Practices](./04-cicd-best-practices.md) - Deployment automation
-17. [GitOps Best Practices](./05-gitops-best-practices.md) - Declarative infrastructure management
+14. [Ansible Best Practices](./01-ansible-best-practices.md) - Configuration management and orchestration
+15. [Terraform Best Practices](./02-terraform-best-practices.md) - Infrastructure as Code patterns
+16. [Kubernetes Best Practices](./03-kubernetes-best-practices.md) - Container orchestration
+17. [CI/CD Pipeline Best Practices](./04-cicd-best-practices.md) - Deployment automation
+18. [GitOps Best Practices](./05-gitops-best-practices.md) - Declarative infrastructure management
 
 ## Practical Examples
 
@@ -219,7 +220,7 @@ For AI coding agents working in this repository, see [.github/copilot-instructio
 
 **Author**: Michael Vogeler  
 **Last Updated**: December 2025
-**Total Content**: 28000+ lines of documentation + 1500+ lines of production examples
+**Total Content**: 31000+ lines of documentation + 1500+ lines of production examples
 **Status**: ✅ Complete and actively maintained
 **Examples**: 19 production-ready files across 5 technologies
-**Best Practices**: 19 comprehensive guides covering all enterprise automation domains
+**Best Practices**: 20 comprehensive guides covering all enterprise automation domains
