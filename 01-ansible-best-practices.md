@@ -576,7 +576,7 @@ galaxy_info:
   description: Installs and configures Nginx web server
   company: Your Company
   license: MIT
-  min_ansible_version: 2.9
+  min_ansible_version: 2.20
   platforms:
     - name: Ubuntu
       versions:

@@ -2,6 +2,16 @@
 
 A comprehensive guide covering **Ansible**, **Terraform**, **Kubernetes**, **CI/CD**, **GitOps**, and **Git** best practices for enterprise-grade infrastructure automation and deployment pipelines.
 
+## Supported Versions
+
+| Tool | Version | Release Date |
+|------|---------|--------------|
+| **Ansible** | 2.20+ | November 2025 |
+| **Terraform** | 1.14+ | December 2025 |
+| **Kubernetes** | 1.34+ | December 2025 |
+| **Python** | 3.8+ | - |
+| **Docker** | 24.0+ | - |
+
 ## Quick Links
 
 - **Best Practices Guides**: [1](#best-practices-guides)

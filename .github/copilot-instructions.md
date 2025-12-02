@@ -182,9 +182,9 @@ When creating examples or guides, ensure:
 
 ### Dependencies & References
 
-- **Ansible**: 2.9+
-- **Terraform**: 1.0+
-- **Kubernetes**: 1.20+
+- **Ansible**: 2.20+
+- **Terraform**: 1.14+
+- **Kubernetes**: 1.34+
 - **Python**: 3.6+ (for Ansible modules)
 - **Vault**: For secret management across all tools
 

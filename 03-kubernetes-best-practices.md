@@ -50,7 +50,7 @@ Add-ons:
 kubeadm init \
   --pod-network-cidr=10.244.0.0/16 \
   --service-cidr=10.96.0.0/12 \
-  --kubernetes-version=v1.27.0
+  --kubernetes-version=v1.34.2
 
 # Join worker nodes
 kubeadm join 192.168.1.100:6443 \
@@ -76,7 +76,7 @@ localAPIEndpoint:
 ---
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
-kubernetesVersion: v1.27.0
+kubernetesVersion: v1.34.2
 controlPlaneEndpoint: api.example.com:6443
 etcd:
   local:
