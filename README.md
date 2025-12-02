@@ -171,9 +171,9 @@ Automation-Handbook/
 
 | Technology | Version | Last Updated |
 |-----------|---------|--------------|
-| Ansible | 2.9+ | Dec 2025 |
-| Terraform | 1.0+ | Dec 2025 |
-| Kubernetes | 1.20+ | Dec 2025 |
+| Ansible | 2.20+ | Dec 2025 |
+| Terraform | 1.14+ | Dec 2025 |
+| Kubernetes | 1.34+ | Dec 2025 |
 | GitLab CI | Latest | Dec 2025 |
 | Jenkins | Latest | Dec 2025 |
 | ArgoCD | Latest | Dec 2025 |
