@@ -33,7 +33,8 @@ A comprehensive guide covering **Ansible**, **Terraform**, **Kubernetes**, **CI/
 10. [Database Best Practices & Automation](./16-database-best-practices-and-automation.md) - Database provisioning, backup, replication, and automation
 11. [Disaster Recovery & Business Continuity](./17-disaster-recovery-and-business-continuity.md) - RTO/RPO planning, backup strategies, and failover automation
 12. [Cost Management & Optimization](./18-cost-management-and-optimization.md) - Resource tagging, automated cleanup, RI optimization, and cost governance
-13. [Git Best Practices](./06-git-best-practices.md) - Version control and collaboration
+13. [Local DevOps Development Environment](./19-local-devops-development-environment.md) - Setup, tools, optimization, and troubleshooting for local development
+14. [Git Best Practices](./06-git-best-practices.md) - Version control and collaboration
 13. [Ansible Best Practices](./01-ansible-best-practices.md) - Configuration management and orchestration
 14. [Terraform Best Practices](./02-terraform-best-practices.md) - Infrastructure as Code patterns
 15. [Kubernetes Best Practices](./03-kubernetes-best-practices.md) - Container orchestration
@@ -218,7 +219,7 @@ For AI coding agents working in this repository, see [.github/copilot-instructio
 
 **Author**: Michael Vogeler  
 **Last Updated**: December 2025
-**Total Content**: 25000+ lines of documentation + 1500+ lines of production examples
+**Total Content**: 28000+ lines of documentation + 1500+ lines of production examples
 **Status**: ✅ Complete and actively maintained
 **Examples**: 19 production-ready files across 5 technologies
-**Best Practices**: 18 comprehensive guides covering all enterprise automation domains
+**Best Practices**: 19 comprehensive guides covering all enterprise automation domains
