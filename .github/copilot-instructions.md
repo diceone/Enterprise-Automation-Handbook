@@ -11,6 +11,7 @@ The **Enterprise Automation Handbook** provides comprehensive best practices for
 - ✅ **12-team-best-practices-and-training.md** - Complete with team structure, onboarding, mentoring, and continuous learning
 - ✅ **13-monitoring-and-observability-deep-dive.md** - Complete with metrics, logging, tracing, and SLO framework
 - ✅ **14-testing-strategies-and-frameworks.md** - Complete with unit, integration, E2E, performance, and chaos testing
+- ✅ **15-logging-best-practices.md** - Complete with structured logging, aggregation, and log analysis
 - ✅ **11-infrastructure-patterns-and-architecture.md** - Complete with microservices, serverless, event-driven, and service mesh patterns
 - ✅ **10-devops-guides-and-principles.md** - Complete with culture, CI/CD, monitoring, incident management, and maturity model
 - ✅ **09-docker-best-practices.md** - Complete with image building, security, orchestration, and optimization
@@ -724,15 +725,99 @@ When creating code examples:
 
 1. **Microservices Architecture**
 
+## Working with Logging Best Practices
+
+### Key Areas to Understand
+
+1. **Logging Fundamentals**
+   - Purpose of logging in modern systems
+   - Distinction from monitoring and observability
+   - Log levels and severity classification (DEBUG through CRITICAL)
+   - Role in incident response and forensics
+   - Cost considerations for enterprise logging
+
+2. **Structured Logging**
+   - JSON format for machine-readable logs
+   - Structured fields (timestamp, level, request_id, user_id)
+   - Context propagation across distributed systems
+   - Implementation patterns (decorators, middleware, frameworks)
+   - Parser and enrichment strategies
+
+3. **Log Levels and Severity**
+   - DEBUG: Development and troubleshooting information
+   - INFO: General informational messages (state changes, transactions)
+   - WARNING: Potential issues that may need attention
+   - ERROR: Errors requiring immediate attention but system continues
+   - CRITICAL: System failures requiring immediate action
+   - Appropriate level selection for different components
+
+4. **Log Retention and Storage**
+   - Three-tier storage strategy (hot/warm/cold)
+   - Hot storage (7 days): Immediate access for troubleshooting
+   - Warm storage (30 days): Mid-term analysis and patterns
+   - Cold storage (365 days): Compliance and historical analysis
+   - Cost optimization through tiering
+   - Retention policies by log type and environment
+
+5. **Log Aggregation Platforms**
+   - ELK Stack (Elasticsearch, Logstash, Kibana)
+   - Loki lightweight alternative for Kubernetes
+   - Filebeat for log shipping
+   - Logstash for parsing and transformation
+   - Index management and retention in Elasticsearch
+
+6. **Application Logging Patterns**
+   - Service-specific logging strategies
+   - Web application logging (request/response)
+   - API logging (endpoints, status codes, latency)
+   - Background job logging (progress, completion, failures)
+   - Database logging (queries, durations, connection issues)
+   - Python/Flask/Django specific patterns
+
+7. **Infrastructure Logging**
+   - Syslog configuration and forwarding
+   - Systemd journal management
+   - Application server logs (Nginx, Apache)
+   - Operating system logs (kernel, audit)
+   - Log rotation and archival strategies
+
+8. **Kubernetes Cluster Logging**
+   - Pod logs and container logging
+   - Fluent-bit DaemonSet for log collection
+   - Namespace-level log filtering
+   - Service mesh logging (Istio sidecar logs)
+   - Audit logging for cluster compliance
+   - Log persistence and cleanup
+
+9. **Log Query Languages**
+   - KQL (Kusto Query Language) for Kibana
+   - LogQL (Loki Query Language)
+   - Regex patterns for log parsing
+   - Time-based and field-based queries
+   - Aggregation and statistical analysis
+   - Creating dashboards from queries
+
+10. **Best Practices and Anti-Patterns**
+    - Do: Use consistent structured format across all services
+    - Do: Include correlation IDs for request tracing
+    - Do: Implement log levels appropriately
+    - Do: Automate log collection and aggregation
+    - Don't: Log sensitive data (passwords, tokens, PII)
+    - Don't: Create unbounded log growth without retention
+    - Don't: Log at DEBUG level in production without filtering
+    - Don't: Mix structured and unstructured logging
+    - Do: Archive logs for compliance and auditing
+    - Do: Monitor log ingestion rates and storage costs
+
 ## Project Metadata
 
 - **Target Audience**: DevOps Engineers, Platform Engineers, Infrastructure Teams
-- **Scope**: Best practices for Ansible, Terraform, Kubernetes, CI/CD, GitOps, Git, Code Quality, DevSecOps, Docker, DevOps Principles, Architecture Patterns, Team Development, Monitoring & Observability, and Testing Strategies
-- **Focus**: Enterprise-grade automation, reliability, maintainability, team development, operational visibility, comprehensive testing, and professional practices
+- **Scope**: Best practices for Ansible, Terraform, Kubernetes, CI/CD, GitOps, Git, Code Quality, DevSecOps, Docker, DevOps Principles, Architecture Patterns, Team Development, Monitoring & Observability, Testing Strategies, and Logging
+- **Focus**: Enterprise-grade automation, reliability, maintainability, team development, operational visibility, comprehensive testing, logging strategies, and professional practices
 - **Author**: Michael Vogeler
 - **Maintained By**: DevOps, QA & Observability Team
 - **Last Updated**: December 2025
-- **Total Guides**: 14 comprehensive best practices guides (17000+ lines)
+- **Total Guides**: 15 comprehensive best practices guides (18000+ lines)
 - **Examples**: 19 production-ready examples across 5 technologies
 
 ---
