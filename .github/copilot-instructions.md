@@ -14,6 +14,7 @@ The **Enterprise Automation Handbook** provides comprehensive best practices for
 - ✅ **15-logging-best-practices.md** - Complete with structured logging, aggregation, and log analysis
 - ✅ **16-database-best-practices-and-automation.md** - Complete with database provisioning, backup, replication, and automation
 - ✅ **17-disaster-recovery-and-business-continuity.md** - Complete with RTO/RPO planning, backup strategies, and failover automation
+- ✅ **18-cost-management-and-optimization.md** - Complete with resource tagging, automated cleanup, RI optimization, and cost governance
 - ✅ **11-infrastructure-patterns-and-architecture.md** - Complete with microservices, serverless, event-driven, and service mesh patterns
 - ✅ **10-devops-guides-and-principles.md** - Complete with culture, CI/CD, monitoring, incident management, and maturity model
 - ✅ **09-docker-best-practices.md** - Complete with image building, security, orchestration, and optimization
@@ -978,15 +979,99 @@ When creating code examples:
     - Long-term archive management
     - Regulatory compliance tracking
 
+## Working with Cost Management & Optimization
+
+### Key Areas to Understand
+
+1. **Cost Optimization Pillars**
+   - Right-sizing (compute, storage, network)
+   - Automation (cleanup, scheduling, policies)
+   - Reserved capacity (RIs, Savings Plans)
+   - Intelligent tiering (storage lifecycle)
+   - Governance (policies, budgets, compliance)
+   - Monitoring (anomalies, trends, forecasts)
+
+2. **Resource Tagging Strategy**
+   - Standardized tag keys and values
+   - Mandatory tags (Environment, CostCenter, Project, Owner)
+   - Chargeback model tags (FixedAllocation, Usage, Hybrid)
+   - Cost allocation tags (Direct, Shared)
+   - Automated tag compliance enforcement
+   - Tag-based cost center chargeback
+
+3. **Cost Allocation & Chargeback**
+   - Cost allocation models (shared pool, project-based, direct)
+   - Chargeback calculation formulas
+   - Monthly chargeback reports
+   - Cost analysis by service/project/team
+   - Multi-environment allocation strategies
+   - Chargeback automation with Cost Explorer
+
+4. **Automated Cost Optimization**
+   - Spot instances (70% compute savings)
+   - Mixed instances policy (Spot + On-Demand)
+   - Scheduled instance scaling (dev/staging shutdown)
+   - Orphaned resource cleanup (volumes, snapshots, EIPs)
+   - Load balancer cleanup
+   - Unused resource detection and termination
+
+5. **Reserved Instances & Savings Plans**
+   - RI opportunity analysis
+   - 1-year vs 3-year RI comparison
+   - Savings Plans vs Reserved Instances
+   - RI utilization tracking
+   - RI purchasing recommendations
+   - Commitment expiration tracking
+
+6. **Instance Right-Sizing**
+   - CPU/memory utilization analysis
+   - Undersized vs oversized instance identification
+   - CloudWatch metric analysis
+   - Right-sizing recommendations
+   - Cost savings calculation
+   - Scheduled review process
+
+7. **Storage Optimization**
+   - S3 lifecycle policies (Standard → IA → Glacier)
+   - Intelligent-Tiering for variable access
+   - Backup lifecycle management
+   - EBS volume optimization
+   - Snapshot retention policies
+   - Data archival strategies
+
+8. **Data Transfer Optimization**
+   - CloudFront for content delivery
+   - VPC endpoints to avoid NAT charges
+   - Same-region communication preference
+   - Data compression strategies
+   - Cross-region transfer minimization
+   - NAT gateway optimization
+
+9. **Monitoring & Anomaly Detection**
+   - Daily cost tracking
+   - Cost anomaly detection (statistical)
+   - Service cost trend analysis
+   - Budget alerts and escalation
+   - Cost vs forecast comparison
+   - Departmental cost dashboards
+
+10. **Cost Governance & Budgets**
+    - Budget policies and thresholds
+    - Automated spending limits by region
+    - Instance launch restrictions
+    - Tag compliance enforcement
+    - Cost center accountability
+    - Financial reporting and compliance
+
 ## Project Metadata
 
 - **Target Audience**: DevOps Engineers, Platform Engineers, Infrastructure Teams
-- **Scope**: Best practices for Ansible, Terraform, Kubernetes, CI/CD, GitOps, Git, Code Quality, DevSecOps, Docker, DevOps Principles, Architecture Patterns, Team Development, Monitoring & Observability, Testing Strategies, Logging, Database Automation, and Disaster Recovery
+- **Scope**: Best practices for Ansible, Terraform, Kubernetes, CI/CD, GitOps, Git, Code Quality, DevSecOps, Docker, DevOps Principles, Architecture Patterns, Team Development, Monitoring & Observability, Testing Strategies, Logging, Database Automation, Disaster Recovery, and Cost Management & Optimization
 - **Focus**: Enterprise-grade automation, reliability, maintainability, team development, operational visibility, comprehensive testing, logging strategies, and professional practices
 - **Author**: Michael Vogeler
 - **Maintained By**: DevOps, QA & Observability Team
 - **Last Updated**: December 2025
-- **Total Guides**: 17 comprehensive best practices guides (23000+ lines)
+- **Total Guides**: 18 comprehensive best practices guides (25000+ lines)
 - **Examples**: 19 production-ready examples across 5 technologies
 
 ---
